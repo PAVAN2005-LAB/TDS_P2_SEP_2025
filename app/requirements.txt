@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-dotenv
+httpx
+playwright
+pandas
+beautifulsoup4
+pdfplumber
+numpy
