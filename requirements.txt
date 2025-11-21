@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+playwright
+openai
+python-dotenv
+httpx
+pandas
+pydantic
+PyPDF2
+tabulate
+markdown
