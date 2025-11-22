@@ -1,0 +1,61 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # -------------------------------------------
+  # JOB 1: Build & Test
+  # -------------------------------------------
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Test Docker Build
+        run: docker build . --file Dockerfile --tag test-build
+
+  # -------------------------------------------
+  # JOB 2: Deploy to Hugging Face Space
+  # -------------------------------------------
+  sync-to-huggingface:
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}  # Add in GitHub → Settings → Secrets → Actions
+        run: |
+          HF_USERNAME="pavan-yadav-sde"
+          HF_SPACE_NAME="p2"
+
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+
+          # Add HuggingFace remote
+          git remote add hf https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME
+
+          # Push main → main
+          git push hf main --force
