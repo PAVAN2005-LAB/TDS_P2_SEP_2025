@@ -52,8 +52,10 @@ LICENSE
 9. Repeats if next task returned  
 
 ## 🏗️ System Architecture
-Architecture diagram: **architecture_diagram.png**
+Architecture diagram: **architecture_diagram.md**
+                            
 
+```
                            ┌──────────────────────────────────────┐
                            │   TDS Evaluator Server (Official)    │
                            │   Sends POST quiz tasks to your API  │
@@ -62,7 +64,7 @@ Architecture diagram: **architecture_diagram.png**
                                            ▼
                         ┌────────────────────────────────────────────┐
                         │          Your FastAPI Endpoint              │
-                        │     URL: https://pavan-yadav-sde-p2.hf.space │
+                        │  URL: https://pavan-yadav-sde-p2.hf.space   │
                         └────────────────────────────────────────────┘
                                            │
         ┌──────────────────────────────────┼──────────────────────────────────┐
@@ -83,30 +85,31 @@ Architecture diagram: **architecture_diagram.png**
                 │                          │                          │
                 ▼                          ▼                          ▼
   ┌────────────────────────┐   ┌────────────────────────┐   ┌────────────────────────┐
-  │Playwright Browser      │   │LLM Reasoning Engine     │   │Tools Layer (tools.py)  │
-  │- Render JS quiz page   │   │- OpenAI GPT for logic   │   │- PDF/CSV parsing       │
-  │- Extract DOM content   │   │- Extract instructions   │   │- File downloads        │
+  │ Playwright Browser     │   │ LLM Reasoning Engine    │   │ Tools Layer (tools.py) │
+  │ - Render JS quiz page  │   │ - OpenAI GPT for logic  │   │ - PDF/CSV parsing      │
+  │ - Extract DOM content  │   │ - Extract instructions  │   │ - File downloads       │
   └────────────────────────┘   └────────────────────────┘   └────────────────────────┘
                 │                          │                          │
                 └──────────────────────────┴──────────────────────────┘
                                            ▼
                             ┌─────────────────────────────┐
-                            │  Answer Constructor          │
+                            │      Answer Constructor      │
                             │ - Format JSON payload        │
                             │ - Support text/number/image  │
                             └─────────────────────────────┘
                                            ▼
                             ┌─────────────────────────────┐
-                            │   Submission Engine         │
-                            │ - Extract submit URL        │
-                            │ - POST final answer         │
+                            │       Submission Engine      │
+                            │ - Extract submit URL         │
+                            │ - POST final answer          │
                             └─────────────────────────────┘
                                            ▼
                               ┌───────────────────────────┐
-                              │  Next Quiz URL?           │
-                              │  If yes → repeat cycle    │
-                              │  If no → quiz completed   │
+                              │       Next Quiz URL?       │
+                              │  If yes → repeat cycle     │
+                              │  If no → quiz completed    │
                               └───────────────────────────┘
+```
 
 
 ## 🔎 Testing Endpoint
@@ -160,6 +163,7 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+## This also variables (.env) or set variable 
 
 ---
 
