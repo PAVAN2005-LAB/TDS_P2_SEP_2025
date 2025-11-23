@@ -163,7 +163,8 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
-## This also variables (.env) or set variable 
+### This also include  variables (.env) or set variable 
+      change according to your  requirement 
 
 ---
 
