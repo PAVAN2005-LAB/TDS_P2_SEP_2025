@@ -1,4 +1,4 @@
-name: Bi-Directional Repo Sync (FINAL)
+name: Bi-Directional Repo Sync (FINAL & FIXED)
 
 on:
   # Allows manual triggering from the Actions tab
@@ -41,10 +41,12 @@ jobs:
           find hf_temp/ -maxdepth 1 -mindepth 1 -not -name '.git' -exec mv {} . \;
           
           # Remove the temporary clone directory
-          rm -rf hf_temp
+          rm-rf hf_temp
 
-      # --- 2. Push Final State TO GitHub AND Hugging Face ---
-      - name: Commit and Push to Both Remotes (FIXED PUSH)
+      # -------------------------------------------------------------
+      # --- 2. Push Final State TO GitHub AND Hugging Face (FIXED)---
+      # -------------------------------------------------------------
+      - name: Commit and Push to Both Remotes (FIXED PUSHES)
         run: |
           # Check for changes in the runner's workspace
           if ! git diff --quiet; then
@@ -52,12 +54,18 @@ jobs:
             git add .
             git commit -m "Bi-Sync: Merged content from Hugging Face Space"
             
-            # 1. Push to GitHub (origin)
+            # 1. Prepare to push to GitHub by pulling any new remote changes
+            echo "Pulling latest changes from GitHub before push..."
+            # git pull --rebase is used here to avoid creating unnecessary merge commits
+            git pull --rebase origin main 
+            
+            # 2. Push to GitHub (origin)
             echo "Pushing final state to GitHub..."
             git push origin main
             
-            # 2. Push to Hugging Face (This uses the full authenticated URL $HF_REPO_URL_AUTH)
+            # 3. Push to Hugging Face
             echo "Pushing final state to Hugging Face..."
+            # Push using the full authenticated URL with --force to ensure sync
             git push "$HF_REPO_URL_AUTH" main --force
           else
             echo "No changes detected. Repositories are already in sync."
