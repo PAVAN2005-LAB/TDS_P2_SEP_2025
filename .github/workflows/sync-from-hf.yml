@@ -1,0 +1,60 @@
+name: 💾 Sync From Hugging Face to GitHub
+
+on:
+  workflow_dispatch: # MUST be manual for safety
+  # If you want it on a schedule, uncomment this (e.g., every 6 hours):
+  # schedule:
+  #   - cron: '0 */6 * * *' 
+
+jobs:
+  sync-hf-to-github:
+    runs-on: ubuntu-latest
+    
+    # Needs permissions to write back to GitHub
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout GitHub Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git and Set Environment Variables
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          
+          # Construct the authenticated URL for cloning
+          echo "HF_REPO_URL_AUTH=https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE_NAME }}" >> $GITHUB_ENV
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
+
+      - name: Pull Changes from Hugging Face
+        run: |
+          # Clone HF repo into a temporary folder
+          git clone --depth 1 $HF_REPO_URL_AUTH hf_temp
+          
+          # Move all contents (EXCEPT the .git folder)
+          find hf_temp/ -maxdepth 1 -mindepth 1 -not -name '.git' -exec mv {} . \;
+          
+          # Remove the temporary clone directory
+          rm -rf hf_temp
+
+      - name: Commit and Push to GitHub (Reliable)
+        run: |
+          if ! git diff --quiet; then
+            echo "Changes detected. Committing and pushing to GitHub."
+            git add .
+            git commit -m "Sync: Content pulled from Hugging Face Space"
+            
+            # Use git pull --rebase to fetch and integrate any concurrent GitHub changes
+            git pull --rebase origin main 
+            
+            # Push the finalized content to GitHub
+            git push origin main
+          else
+            echo "No new changes from Hugging Face. Skipping commit."
+          fi
