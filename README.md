@@ -263,7 +263,26 @@ Health check endpoint for monitoring.
   "uptime_seconds": 3600
 }
 ```
+### `GET /history
 
+Retrieves a log of past job submissions, providing details on their status, submission time, and associated URLs.
+
+**Response:**
+```json
+{
+  "count": 1,
+  "logs": [
+    {
+      "id": 1,
+      "url": "[https://tds-llm-analysis.s-anand.net/demo](https://tds-llm-analysis.s-anand.net/demo)",
+      "submitted_at": "2025-11-28 20:22:38",
+      "completed_at": "2025-11-28 20:25:24",
+      "status": "completed",
+      "result": null
+    }
+  ]
+}
+```
 ## 🛠️ Tools & Capabilities
 
 The agent has access to the following tools:
