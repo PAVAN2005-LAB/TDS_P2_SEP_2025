@@ -3,15 +3,16 @@ name: Sync From Hugging Face to GitHub
 on:
   # Allows you to run this workflow manually from the Actions tab in GitHub
   workflow_dispatch:
-  # You can also set a schedule if needed (e.g., run every day at midnight UTC)
+  # Optional: Uncomment and modify the 'schedule' block 
+  # if you want this to run automatically (e.g., daily).
   # schedule:
-  #   - cron: '0 0 * * *'
+  #   - cron: '0 0 * * *' # Example: Run every day at midnight UTC
 
 jobs:
   sync-hf-to-github:
     runs-on: ubuntu-latest
 
-    # Grant the built-in GITHUB_TOKEN permissions to push to the repo
+    # Grant the built-in GITHUB_TOKEN write permissions to push changes to the repo
     permissions:
       contents: write
 
@@ -19,16 +20,18 @@ jobs:
       - name: Checkout GitHub Repository
         uses: actions/checkout@v4
         with:
-          # Fetch the full history to make sure we can push back
+          # Fetch the full history to enable pushing back later
           fetch-depth: 0
 
       - name: Configure Git
         run: |
+          # Set the identity for the commit in GitHub
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
 
       - name: Set Environment Variables
         run: |
+          # Construct the full authenticated URL using GitHub Secrets
           echo "HF_REPO_URL=https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE_NAME }}" >> $GITHUB_ENV
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -38,11 +41,14 @@ jobs:
       - name: Clone Hugging Face Space
         run: |
           # Clone the HF repo into a temporary folder named 'hf_temp'
+          # Uses the authenticated URL from the environment variable
           git clone --depth 1 $HF_REPO_URL hf_temp
 
       - name: Copy Files and Clean Up (Fixed)
         run: |
-          # Use 'find' to move all contents (including dotfiles) EXCEPT the .git folder
+          # FIX: Use 'find' to move all contents (including dotfiles) 
+          # EXCEPT the .git folder from the temporary clone to the root directory (.).
+          # This avoids the "mv: cannot overwrite './.git'" error.
           find hf_temp/ -maxdepth 1 -mindepth 1 -not -name '.git' -exec mv {} . \;
           
           # Remove the temporary clone directory
@@ -50,13 +56,13 @@ jobs:
 
       - name: Commit and Push to GitHub
         run: |
-          # Check if there are any changes to commit
+          # Check if any new or modified files were copied over
           if git status --porcelain | grep .; then
             echo "Changes detected. Committing and pushing."
             git add .
             git commit -m "Sync: Updated content from Hugging Face Space"
             
-            # Use the GITHUB_TOKEN for authentication when pushing
+            # Push the changes to the 'main' branch of the GitHub repository
             git push origin main
           else
             echo "No changes detected. Skipping commit."
