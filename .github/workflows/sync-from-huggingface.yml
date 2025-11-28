@@ -3,7 +3,7 @@ name: Sync From Hugging Face to GitHub
 on:
   # Allows you to run this workflow manually from the Actions tab in GitHub
   workflow_dispatch:
-  # Optional: You can also set a schedule, e.g., run every day at midnight UTC
+  # You can also set a schedule if needed (e.g., run every day at midnight UTC)
   # schedule:
   #   - cron: '0 0 * * *'
 
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout GitHub Repository
         uses: actions/checkout@v4
         with:
-          # We need to fetch the full history to make sure we can push back
+          # Fetch the full history to make sure we can push back
           fetch-depth: 0
 
       - name: Configure Git
@@ -40,13 +40,10 @@ jobs:
           # Clone the HF repo into a temporary folder named 'hf_temp'
           git clone --depth 1 $HF_REPO_URL hf_temp
 
-      - name: Copy Files and Clean Up
+      - name: Copy Files and Clean Up (Fixed)
         run: |
-          # Move all files (including hidden ones like .env or .gitignore) 
-          # from the cloned HF repo (excluding its .git folder) to the root of the GH repo
-          shopt -s dotglob
-          mv hf_temp/* .
-          shopt -u dotglob
+          # Use 'find' to move all contents (including dotfiles) EXCEPT the .git folder
+          find hf_temp/ -maxdepth 1 -mindepth 1 -not -name '.git' -exec mv {} . \;
           
           # Remove the temporary clone directory
           rm -rf hf_temp
@@ -54,13 +51,13 @@ jobs:
       - name: Commit and Push to GitHub
         run: |
           # Check if there are any changes to commit
-          if ! git diff --exit-code; then
-            echo "No changes detected. Skipping commit."
-          else
+          if git status --porcelain | grep .; then
             echo "Changes detected. Committing and pushing."
             git add .
             git commit -m "Sync: Updated content from Hugging Face Space"
             
             # Use the GITHUB_TOKEN for authentication when pushing
             git push origin main
+          else
+            echo "No changes detected. Skipping commit."
           fi
