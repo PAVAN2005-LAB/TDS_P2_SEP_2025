@@ -18,7 +18,7 @@ An intelligent, autonomous agent built with LangGraph and LangChain that solves 
 
 ## 🚀 Live Endpoint
 ```
-https://pavan-yadav-sde-p2.hf.space/quiz
+https://pavan-yadav-sde-p2.hf.space/
 ```
 ## 📋 Table of Contents
 
