@@ -1,13 +1,13 @@
-name: Bi-Directional Repo Sync (FIXED)
+name: Bi-Directional Repo Sync (FINAL)
 
 on:
+  # Allows manual triggering from the Actions tab
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 */6 * * *' 
 
 jobs:
   sync-hf-and-github:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write # Needed to push to GitHub
 
@@ -19,49 +19,46 @@ jobs:
 
       - name: Configure Git and Set Environment Variables
         run: |
+          # Configure Git user for commits
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           
-          # We only need the authenticated URL for PULLING from HF
-          # For PUSHING to HF, we'll use a safer direct push command below.
+          # Construct the full authenticated URL with embedded secrets
           echo "HF_REPO_URL_AUTH=https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE_NAME }}" >> $GITHUB_ENV
-          echo "HF_REPO_URL_SAFE=https://huggingface.co/spaces/${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE_NAME }}" >> $GITHUB_ENV
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_USERNAME: ${{ secrets.HF_USERNAME }}
           HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
 
-      # --- 1. Pull Changes FROM Hugging Face to GitHub ---
+      # --- 1. Pull Changes FROM Hugging Face ---
       - name: Pull Changes from Hugging Face to Local Runner
         run: |
           echo "Syncing changes from Hugging Face..."
-          # Clone HF repo into a temporary folder
+          # Clone HF repo into a temporary folder using the authenticated URL
           git clone --depth 1 $HF_REPO_URL_AUTH hf_temp
           
-          # Move all contents (EXCEPT the .git folder)
+          # Use 'find' to move all contents (EXCEPT the .git folder)
           find hf_temp/ -maxdepth 1 -mindepth 1 -not -name '.git' -exec mv {} . \;
           
           # Remove the temporary clone directory
           rm -rf hf_temp
 
       # --- 2. Push Final State TO GitHub AND Hugging Face ---
-      - name: Commit and Push to Both Remotes
+      - name: Commit and Push to Both Remotes (FIXED PUSH)
         run: |
-          # Use a more reliable check for changes
+          # Check for changes in the runner's workspace
           if ! git diff --quiet; then
             echo "Changes detected. Committing and synchronizing."
             git add .
             git commit -m "Bi-Sync: Merged content from Hugging Face Space"
             
-            # 1. Push to GitHub (origin) - Uses the standard GITHUB_TOKEN
+            # 1. Push to GitHub (origin)
             echo "Pushing final state to GitHub..."
             git push origin main
             
-            # 2. Push to Hugging Face - Uses the secure, authenticated URL
+            # 2. Push to Hugging Face (This uses the full authenticated URL $HF_REPO_URL_AUTH)
             echo "Pushing final state to Hugging Face..."
-            
-            # Push using the token directly in the push command for better reliability
-            git push "$HF_REPO_URL_SAFE" main --force --repo="https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE_NAME }}"
+            git push "$HF_REPO_URL_AUTH" main --force
           else
             echo "No changes detected. Repositories are already in sync."
           fi
