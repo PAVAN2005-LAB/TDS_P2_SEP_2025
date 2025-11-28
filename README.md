@@ -42,6 +42,21 @@ This project was developed for the TDS (Tools in Data Science) course project, w
 
 The system receives quiz URLs via a REST API, navigates through multiple quiz pages, solves each task using LLM-powered reasoning and specialized tools, and submits answers back to the evaluation server.
 
+## 🧠 How the System Works
+1. Receives POST quiz tasks  
+2. Validates email + secret  
+3. Loads quiz URL using Playwright  
+4. Extracts DOM, instructions, files  
+5. Processes data using pandas/tools(if) 
+6. Uses LLM for reasoning if needed  
+7. Builds final answer JSON  
+8. Submits to provided submit URL  
+9. Repeats if next task returned 
+## 🚀 Live Endpoint
+```
+https://pavan-yadav-sde-p2.hf.space/
+```
+
 ## 🏗️ Architecture
 
 The project uses a **LangGraph state machine** architecture with the following components:
@@ -205,7 +220,8 @@ Expected response:
 
 ```json
 {
-  "status": "ok"
+"status":"ok"
+,"task_id":1
 }
 ```
 
