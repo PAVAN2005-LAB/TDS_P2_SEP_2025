@@ -1,0 +1,41 @@
+name: 🚀 Deploy to Hugging Face
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  deploy-to-huggingface:
+    runs-on: ubuntu-latest
+    
+    # Needs permissions to read the code, but not necessarily write back to GitHub
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code from GitHub
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Configure Git and Push to Hugging Face
+        run: |
+          # 1. Configure the Hugging Face remote URL with authentication
+          HF_REPO_URL_AUTH="https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE_NAME }}"
+          
+          # 2. Configure Git user for the HF commit log
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+
+          # 3. Add Hugging Face as a remote
+          git remote add hf $HF_REPO_URL_AUTH
+          
+          # 4. Force push the GitHub main branch to the Hugging Face Space
+          echo "Pushing changes from GitHub to Hugging Face..."
+          git push hf main --force
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
